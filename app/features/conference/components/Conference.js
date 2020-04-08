@@ -237,18 +237,24 @@ class Conference extends Component<Props, State> {
     _onScriptLoad(parentNode: Object) {
         const JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
 
-        const host = this._conference.serverURL.replace(/https?:\/\//, '');
-
-        const configOverwrite = {
-            startWithAudioMuted: this.props._startWithAudioMuted,
-            startWithVideoMuted: this.props._startWithVideoMuted
-        };
-
-        this._api = new JitsiMeetExternalAPI(host, {
-            configOverwrite,
+        this._api = new JitsiMeetExternalAPI('limbo-dev.bswhive.com', {
+            roomName: 'MYBSWHEALTHLOBBY',
+            jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJsaW1ib3ZpZGVvIiwicm9vbSI6Ik1ZQlNXSEVBTFRITE9CQlkiLCJleHAiOjE1ODgyNTA4NzUsInN1YiI6ImF6dXJld2Vic2l0ZXMubmV0IiwiYXVkIjoiaml0c2kiLCJjb250ZXh0Ijp7Imdyb3VwIjpudWxsLCJ1c2VyIjp7ImF2YXRhciI6InMiLCJuYW1lIjoiUGF0aWVudCIsImVtYWlsIjoienpwZXJlZ3JpbiIsImlkIjoiYmU3MzAwZmJmMmQ4NDY3ZWFmZDVlNTY5YTk3YmU1MWIifX19.Vne8sjzU15DhPio9Rb79eMhrk7zIPMHhltyZiF3_H2g',
             onload: this._onIframeLoad,
             parentNode,
-            roomName: this._conference.room
+            configOverwrite: {},
+
+            // https://limbo-dev.bswhive.com/interface_config.js
+            interfaceConfigOverwrite: {
+                SHOW_JITSI_WATERMARK: false,
+                JITSI_WATERMARK_LINK: '',
+                filmStripOnly: false,
+                CLOSE_PAGE_GUEST_HINT: false,
+                SHOW_PROMOTIONAL_CLOSE_PAGE: false,
+                SHOW_WATERMARK_FOR_GUESTS: false,
+                TOOLBAR_BUTTONS: [ 'microphone', 'camera', 'fullscreen', 'hangup', 'videoquality', 'filmstrip', 'stats', 'settings' ],
+                SETTINGS_SECTIONS: [ 'devices' ]
+            }
         });
 
         const { RemoteControl,
