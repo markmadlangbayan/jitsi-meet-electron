@@ -1,9 +1,9 @@
 {
-  "name": "jitsi-meet-electron",
+  "name": "mybswhealthvideolauncher",
   "version": "2.0.0-beta4",
-  "description": "Electron application for Jitsi Meet",
+  "description": "MyBSWHealth Video Launcher",
   "main": "./build/main.js",
-  "productName": "Jitsi Meet",
+  "productName": "MyBSWHealth Video Visit Launcher",
   "scripts": {
     "start": "webpack --config ./webpack.main.js --mode development && concurrently \"npm:watch\" \"electron ./build/main.js\"",
     "clean": "rm -rf node_modules build dist",
@@ -16,9 +16,15 @@
     "watch": "webpack --config ./webpack.renderer.js --mode development --watch --watch-poll"
   },
   "build": {
-    "appId": "org.jitsi.jitsi-meet",
-    "productName": "Jitsi Meet",
+    "appId": "com.baylorscottandwhite.videolauncher",
+    "productName": "MyBSWHealth Video Visit Launcher",
     "generateUpdatesFilesForAllChannels": true,
+    "protocols": {
+      "name": "electron-deep-linking",
+      "schemes": [
+        "mybswhealth"
+      ]
+    },
     "files": [
       "**/*",
       "resources",
@@ -26,12 +32,12 @@
       "!main.js"
     ],
     "mac": {
-      "artifactName": "jitsi-meet.${ext}",
+      "artifactName": "mybswhealthvideolauncher.${ext}",
       "category": "public.app-category.video",
       "darkModeSupport": true
     },
     "linux": {
-      "artifactName": "jitsi-meet-${arch}.${ext}",
+      "artifactName": "mybswhealthvideolauncher-${arch}.${ext}",
       "category": "VideoConference;AudioVideo;Audio;Video;Network",
       "description": "Jitsi Meet Desktop App",
       "executableName": "jitsi-meet",
@@ -43,7 +49,7 @@
       ]
     },
     "win": {
-      "artifactName": "jitsi-meet.${ext}",
+      "artifactName": "mybswhealthvideolauncher.${ext}",
       "target": [
         {
           "arch": [

@@ -205,6 +205,11 @@ app.on('certificate-error',
     }
 );
 
+if (!app.isDefaultProtocolClient('mybswhealth')) {
+    // Define custom protocol handler. Deep linking works on packaged versions of the application!
+    app.setAsDefaultProtocolClient('mybswhealth');
+}
+
 app.on('ready', createJitsiMeetWindow);
 
 app.on('second-instance', () => {
@@ -217,6 +222,15 @@ app.on('second-instance', () => {
         mainWindow.focus();
     }
 });
+
+app.on('will-finish-launching', () => {
+    // Protocol handler for osx
+    app.on('open-url', (event, url) => {
+      event.preventDefault()
+      deeplinkingUrl = url
+      logEverywhere('open-url# ' + deeplinkingUrl)
+    });
+  });
 
 app.on('window-all-closed', () => {
     // Don't quit the application on macOS.
