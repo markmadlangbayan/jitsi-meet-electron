@@ -14,6 +14,15 @@ import { conferenceEnded, conferenceJoined } from '../actions';
 import { LoadingIndicator, Wrapper } from '../styled';
 import { getExternalApiURL } from '../../utils';
 
+// eslint-disable-next-line valid-jsdoc
+// eslint-disable-next-line require-jsdoc
+function logEverywhere(s) {
+    console.log(s);
+    if (window && window.webContents) {
+        window.webContents.executeJavaScript(`console.log("${s}")`);
+    }
+}
+
 type Props = {
 
     /**
@@ -90,6 +99,11 @@ class Conference extends Component<Props, State> {
     _ref: Object;
 
     /**
+     * Reference to the element of this component.
+     */
+    _url: string;
+
+    /**
      * Initializes a new {@code Conference} instance.
      *
      * @inheritdoc
@@ -118,6 +132,8 @@ class Conference extends Component<Props, State> {
         const serverURL = this.props.location.state.serverURL
             || this.props._serverURL
             || config.defaultServerURL;
+        
+        this._url = this.props.location.state.url;
 
         this._conference = {
             room,
@@ -237,9 +253,17 @@ class Conference extends Component<Props, State> {
     _onScriptLoad(parentNode: Object) {
         const JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
 
+        // const str = 'mybswhealth://room=MYBSWHEALTHLOBBY&jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJsaW1ib3ZpZGVvIiwicm9vbSI6Ik1ZQlNXSEVBTFRITE9CQlkiLCJleHAiOjE1ODgyNTA4NzUsInN1YiI6ImF6dXJld2Vic2l0ZXMubmV0IiwiYXVkIjoiaml0c2kiLCJjb250ZXh0Ijp7Imdyb3VwIjpudWxsLCJ1c2VyIjp7ImF2YXRhciI6InMiLCJuYW1lIjoiUGF0aWVudCIsImVtYWlsIjoienpwZXJlZ3JpbiIsImlkIjoiYmU3MzAwZmJmMmQ4NDY3ZWFmZDVlNTY5YTk3YmU1MWIifX19.Vne8sjzU15DhPio9Rb79eMhrk7zIPMHhltyZiF3_H2g';
+        const params = this._url.replace('mybswhealth://', '').split('&')
+            .map(c => c.split('=')[1]);
+        const roomName = params[0];
+        const jwt = params[1];
+
+        logEverywhere(`==> room=${roomName}  :::: jwt=${jwt}`);
+
         this._api = new JitsiMeetExternalAPI('limbo-dev.bswhive.com', {
-            roomName: 'MYBSWHEALTHLOBBY',
-            jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJsaW1ib3ZpZGVvIiwicm9vbSI6Ik1ZQlNXSEVBTFRITE9CQlkiLCJleHAiOjE1ODgyNTA4NzUsInN1YiI6ImF6dXJld2Vic2l0ZXMubmV0IiwiYXVkIjoiaml0c2kiLCJjb250ZXh0Ijp7Imdyb3VwIjpudWxsLCJ1c2VyIjp7ImF2YXRhciI6InMiLCJuYW1lIjoiUGF0aWVudCIsImVtYWlsIjoienpwZXJlZ3JpbiIsImlkIjoiYmU3MzAwZmJmMmQ4NDY3ZWFmZDVlNTY5YTk3YmU1MWIifX19.Vne8sjzU15DhPio9Rb79eMhrk7zIPMHhltyZiF3_H2g',
+            roomName,
+            jwt,
             onload: this._onIframeLoad,
             parentNode,
             configOverwrite: {},
@@ -258,22 +282,18 @@ class Conference extends Component<Props, State> {
         });
 
         const { RemoteControl,
-            setupScreenSharingRender,
             setupAlwaysOnTopRender,
             initPopupsConfigurationRender,
-            setupWiFiStats,
-            setupPowerMonitorRender
+            setupWiFiStats
         } = window.jitsiNodeAPI.jitsiMeetElectronUtils;
 
         initPopupsConfigurationRender(this._api);
 
         const iframe = this._api.getIFrame();
 
-        setupScreenSharingRender(this._api);
         new RemoteControl(iframe); // eslint-disable-line no-new
         setupAlwaysOnTopRender(this._api);
         setupWiFiStats(iframe);
-        setupPowerMonitorRender(this._api);
 
         this._api.on('suspendDetected', this._onVideoConferenceEnded);
         this._api.on('readyToClose', this._onVideoConferenceEnded);

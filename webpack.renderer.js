@@ -6,7 +6,7 @@ const ELECTRON_VERSION = require('./package.json').devDependencies.electron;
 module.exports = {
     // The renderer code rus in BrowserWindow without node support so we must
     // target a web platform.
-    target: 'web',
+    target: 'electron-renderer',
     entry: { app: './app/index.js' },
     plugins: [
         new HtmlWebpackPlugin({
@@ -77,4 +77,3 @@ module.exports = {
         ]
     }
 };
-

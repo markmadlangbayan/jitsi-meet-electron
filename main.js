@@ -19,12 +19,14 @@ const {
 const path = require('path');
 const URL = require('url');
 const config = require('./app/features/config');
+const { systemPreferences } = require('electron');
 
 // We need this because of https://github.com/electron/electron/issues/18214
 app.commandLine.appendSwitch('disable-site-isolation-trials');
 
 autoUpdater.logger = require('electron-log');
 autoUpdater.logger.transports.file.level = 'info';
+
 
 /**
  * When in development mode:
@@ -42,6 +44,29 @@ if (isDev) {
  * acidentally.
  */
 let mainWindow = null;
+
+// eslint-disable-next-line valid-jsdoc
+// eslint-disable-next-line require-jsdoc
+function logEverywhere(s) {
+    console.log(s);
+    if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.executeJavaScript(`console.log("${s}")`);
+    }
+}
+
+/**
+ * SetDeepLink
+ */
+function setDeepLink(url) {
+    if (!mainWindow) {
+        return;
+    }
+    mainWindow.deepLinkUrl = url;
+    
+    mainWindow.webContents.send('DeepLink:send', url);
+    logEverywhere(`Deeplink received ${url}`);
+
+}
 
 /**
  * Sets the application menu. It is hidden on all platforms except macOS because
@@ -143,7 +168,7 @@ function createJitsiMeetWindow() {
         show: false,
         webPreferences: {
             nativeWindowOpen: true,
-            nodeIntegration: false,
+            nodeIntegration: true,
             preload: path.resolve(basePath, './build/preload.js')
         }
     };
@@ -171,6 +196,14 @@ function createJitsiMeetWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });
+
+    // Open the DevTools.
+    // mainWindow.webContents.openDevTools();
+
+    // Protocol handler for win32
+    if (process.platform === 'win32') {
+        setDeepLink(process.argv.slice(1));
+    }
 }
 
 /**
@@ -189,7 +222,11 @@ if (!gotInstanceLock) {
 
 app.on('activate', () => {
     if (mainWindow === null) {
-        createJitsiMeetWindow();
+        systemPreferences.askForMediaAccess('camera').then(() => {
+            systemPreferences.askForMediaAccess('microphone').then(() => {
+                createJitsiMeetWindow();
+            });
+        });
     }
 });
 
@@ -210,30 +247,49 @@ if (!app.isDefaultProtocolClient('mybswhealth')) {
     app.setAsDefaultProtocolClient('mybswhealth');
 }
 
-app.on('ready', createJitsiMeetWindow);
+app.on('will-finish-launching', () => {
+    logEverywhere('will-finish-launching');
 
-app.on('second-instance', () => {
+    // Protocol handler for macos
+    app.on('open-url', (event, url) => {
+        event.preventDefault();
+        logEverywhere(`URL ${url}`);
+        setDeepLink(url);
+    });
+});
+
+
+app.on('ready', () => {
+    systemPreferences.askForMediaAccess('camera').then(() => {
+        systemPreferences.askForMediaAccess('microphone').then(() => {
+            createJitsiMeetWindow();
+        });
+    });
+});
+
+app.on('second-instance', (e, argv) => {
     /**
      * If someone creates second instance of the application, set focus on
      * existing window.
      */
+
+    // Protocol handler for win32
+    // argv: An array of the second instance’s (command line / deep linked) arguments
+    if (process.platform === 'win32') {
+        setDeepLink(process.argv.slice(1));
+    }
+
     if (mainWindow) {
         mainWindow.isMinimized() && mainWindow.restore();
         mainWindow.focus();
     }
 });
 
-app.on('will-finish-launching', () => {
-    // Protocol handler for osx
-    app.on('open-url', (event, url) => {
-      event.preventDefault()
-      deeplinkingUrl = url
-      logEverywhere('open-url# ' + deeplinkingUrl)
-    });
-  });
+
 
 app.on('window-all-closed', () => {
-    // Don't quit the application on macOS.
+    // On OS X it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== 'darwin') {
         app.quit();
     }

@@ -18,6 +18,16 @@ import { normalizeServerURL } from '../../utils';
 
 import { Body, Form, Header, Wrapper } from '../styled';
 
+const { ipcRenderer } = require('electron');
+
+// eslint-disable-next-line valid-jsdoc
+// eslint-disable-next-line require-jsdoc
+function logEverywhere(s) {
+    console.log(s);
+    if (window && window.webContents) {
+        window.webContents.executeJavaScript(`console.log("${s}")`);
+    }
+}
 
 type Props = {
 
@@ -71,6 +81,7 @@ class Welcome extends Component<Props, State> {
         this._onURLChange = this._onURLChange.bind(this);
         this._onFormSubmit = this._onFormSubmit.bind(this);
         this._onJoin = this._onJoin.bind(this);
+        this._onJoin1 = this._onJoin1.bind(this);
     }
 
     /**
@@ -81,7 +92,10 @@ class Welcome extends Component<Props, State> {
      * @returns {void}
      */
     componentDidMount() {
-        this.props.dispatch(startOnboarding('welcome-page'));
+        ipcRenderer.on('DeepLink:send', (event, arg) => {
+            console.log(`HELLO: ${arg}`); // prints "pong"
+            this._onJoin1(arg);
+        });
     }
 
     /**
@@ -91,12 +105,9 @@ class Welcome extends Component<Props, State> {
      */
     render() {
         return (
-            <Page navigation = { <Navbar /> }>
+            <Page>
                 <AtlasKitThemeProvider mode = 'light'>
-                    <Wrapper>
-                        { this._renderHeader() }
-                        { this._renderBody() }
-                        <Onboarding section = 'welcome-page' />
+                    <Wrapper>{}
                     </Wrapper>
                 </AtlasKitThemeProvider>
             </Page>
@@ -116,6 +127,17 @@ class Welcome extends Component<Props, State> {
         this._onJoin();
     }
 
+    _onJoin1: (*) => void;
+
+    /**
+     * Redirect and join conference.
+     * @param {string} url - Event by which this function is called.
+     * @returns {void}
+     */
+    _onJoin1(url: string) {
+        this.props.dispatch(push('/conference', { url }));
+    }
+    
     _onJoin: (*) => void;
 
     /**
@@ -144,9 +166,9 @@ class Welcome extends Component<Props, State> {
         }
 
         // Don't navigate if no room was specified.
-        if (!room) {
-            return;
-        }
+        // if (!room) {
+        //     return;
+        // }
 
         this.props.dispatch(push('/conference', {
             room,

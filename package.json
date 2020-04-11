@@ -34,7 +34,8 @@
     "mac": {
       "artifactName": "mybswhealthvideolauncher.${ext}",
       "category": "public.app-category.video",
-      "darkModeSupport": true
+      "darkModeSupport": true,
+      "hardenedRuntime": false
     },
     "linux": {
       "artifactName": "mybswhealthvideolauncher-${arch}.${ext}",
